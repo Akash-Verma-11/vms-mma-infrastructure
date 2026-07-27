@@ -1,0 +1,13 @@
+---
+vms_mma_business_name: "VMS-MMA"
+vms_mma_project_name: "vms-mma"
+vms_mma_environment: "dev"
+vms_mma_aws_region: "ap-south-1"
+
+vms_mma_custom_domain:
+  enabled: false
+
+  # Enable only after purchasing and configuring the domain.
+  # name: "vms-mma.com"
+
+vms_mma_managed_by: "Ansible"

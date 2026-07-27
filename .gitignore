@@ -36,3 +36,18 @@ vault-password.txt
 *.log
 *.tmp
 *.swp
+
+# Ansible downloaded collections
+ansible/collections/ansible_collections/
+
+# Ansible temporary and retry files
+*.retry
+.ansible/
+ansible/.cache/
+
+# Ansible Vault password files
+vault-password.txt
+*.vault-password
+
+# Local dynamic inventory cache
+ansible/inventories/**/.cache/

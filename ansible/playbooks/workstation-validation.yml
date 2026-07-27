@@ -1,0 +1,71 @@
+---
+- name: Validate the VMS-MMA Ansible workstation
+  hosts: vms_mma_local
+  gather_facts: true
+
+  vars_files:
+    - "{{ playbook_dir }}/../group_vars/all.yml"
+
+  vars:
+    validation_file: /tmp/vms-mma-ansible-validation.txt
+
+  tasks:
+    - name: Verify the VMS-MMA project identity
+      ansible.builtin.assert:
+        that:
+          - vms_mma_business_name == "VMS-MMA"
+          - vms_mma_project_name == "vms-mma"
+          - vms_mma_environment in ["dev", "staging", "production"]
+          - vms_mma_aws_region == "ap-south-1"
+          - not (vms_mma_custom_domain.enabled | bool)
+        fail_msg: VMS-MMA project variables are incorrect.
+        success_msg: VMS-MMA project variables are valid.
+
+    - name: Display the control-node operating system
+      ansible.builtin.debug:
+        msg:
+          - "Hostname: {{ ansible_facts['hostname'] }}"
+          - "Operating system: {{ ansible_facts['distribution'] }}"
+          - "Version: {{ ansible_facts['distribution_version'] }}"
+          - "Architecture: {{ ansible_facts['architecture'] }}"
+          - "Python: {{ ansible_facts['python_version'] }}"
+
+    - name: Create the VMS-MMA validation file
+      ansible.builtin.copy:
+        dest: "{{ validation_file }}"
+        content: |
+          Business name: {{ vms_mma_business_name }}
+          Project name: {{ vms_mma_project_name }}
+          Environment: {{ vms_mma_environment }}
+          AWS Region: {{ vms_mma_aws_region }}
+          Managed by: {{ vms_mma_managed_by }}
+        mode: "0644"
+
+    - name: Explain check-mode file validation
+      ansible.builtin.debug:
+        msg: >-
+          Check mode predicted the validation-file change without creating
+          the physical file. File-content checks are therefore skipped.
+      when: ansible_check_mode
+
+    - name: Read the validation file
+      ansible.builtin.slurp:
+        src: "{{ validation_file }}"
+      register: validation_file_data
+      when: not ansible_check_mode
+
+    - name: Verify the validation file contents
+      ansible.builtin.assert:
+        that:
+          - "'Business name: VMS-MMA' in (validation_file_data.content | b64decode)"
+          - "'Project name: vms-mma' in (validation_file_data.content | b64decode)"
+          - "'Environment: dev' in (validation_file_data.content | b64decode)"
+          - "'AWS Region: ap-south-1' in (validation_file_data.content | b64decode)"
+          - "'Managed by: Ansible' in (validation_file_data.content | b64decode)"
+        fail_msg: The VMS-MMA validation file contains incorrect information.
+        success_msg: The VMS-MMA validation file is correct.
+      when: not ansible_check_mode
+
+    - name: Complete the workstation validation
+      ansible.builtin.debug:
+        msg: VMS-MMA Ansible workstation validation completed successfully.
